@@ -1,0 +1,1 @@
+{ "domain": "diyanet_ezan", "name": "Diyanet Ezan", "codeowners": ["@lasharor"], "config_flow": true, "documentation": "https://github.com/lasharor/Diyanet-Ezan", "requirements": ["aiohttp==3.9.1"], "version": "1.0.0" }
