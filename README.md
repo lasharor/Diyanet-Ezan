@@ -1,6 +1,13 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/dark_logo.png">
+    <img src="assets/logo.png" alt="Diyanet Ezan" width="460">
+  </picture>
+</p>
+
 # Diyanet Ezan for Home Assistant
 
-Official Diyanet (Türkiye) prayer times in Home Assistant, the same times you see on [namazvakti.diyanet.gov.tr](https://namazvakti.diyanet.gov.tr). No YAML needed: pick your country, city and district from the setup dialog and the sensors appear.
+Official Diyanet (Türkiye) prayer times in Home Assistant, the same times you see on [namazvakti.diyanet.gov.tr](https://namazvakti.diyanet.gov.tr). No YAML needed: pick your country, city and district from the setup dialog and the sensors appear. Optionally, the integration plays the ezan on your speakers too.
 
 The times come from [ezanvakti.emushaf.net](https://ezanvakti.emushaf.net), an API by Furkan Tektas that mirrors Diyanet's own table.
 
@@ -19,6 +26,41 @@ Copy `custom_components/diyanet_ezan` into the `custom_components` folder of you
 ## Setup
 
 **Settings → Devices & services → Add integration → Diyanet Ezan**, then choose your country, city and district. Countries with a single city level (such as the Netherlands) skip straight to the district list. You can add several districts if you want times for more than one place.
+
+## Ezan on your speakers (optional)
+
+Open **Settings → Devices & services → Diyanet Ezan → Configure** to have the integration play the ezan itself, without writing an automation:
+
+| Option | What it does |
+|---|---|
+| Speakers | The media players to play on. Leave empty to keep playback off. |
+| Ezan audio | What to play, e.g. `media-source://media_source/local/ezan.mp3` for a file in your `media` folder. A local file is more reliable than a web URL. |
+| Volume | Sets this volume first. Leave empty to keep each speaker's volume. |
+| Play at | Which times to play: İmsak, Sabah, Öğle, İkindi, Akşam, Yatsı. |
+| Morning ezan | Sabah plays this many minutes before Güneş (default 35). |
+| Only when someone is home | Skips playback when `zone.home` shows nobody is home. |
+| Play as announcement | Pauses music and resumes it after the ezan, on speakers that support it. |
+| Ramadan sahur alarm | During Ramazan, plays this many minutes before İmsak (0 = off), with its own audio if you like. |
+
+When speakers are set, two extra entities appear:
+
+- `switch.diyanet_ezan_playback`: turn it off to mute the ezan, for example during a call. It remembers its state across restarts.
+- `button.diyanet_ezan_play_now`: plays the ezan right away, handy to test speakers and volume.
+
+Mute during a Teams call, for example:
+
+```yaml
+- alias: Mute ezan during calls
+  triggers:
+    - trigger: state
+      entity_id: sensor.teams_activity
+  actions:
+    - action: "switch.turn_{{ 'off' if trigger.to_state.state == 'In a call' else 'on' }}"
+      target:
+        entity_id: switch.diyanet_ezan_playback
+```
+
+Notifications to your phone or TV aren't built in; use the `diyanet_ezan_prayer` event below for those.
 
 ## Entities
 
@@ -40,13 +82,15 @@ Entity IDs below are what you get with Home Assistant set to English. Check the 
 
 The time sensors are real timestamps, so the dashboard shows them in your own time format and you can trigger automations on them directly. After Yatsı the next prayer rolls over to tomorrow's İmsak.
 
+The logo shows in Home Assistant 2026.3 and newer.
+
 Times are refreshed twice a day and cached on disk, so a restart or a short API outage doesn't leave you without times.
 
 ## Automations
 
-### Play the ezan at every prayer time
+### Your own ezan automation
 
-The integration fires a `diyanet_ezan_prayer` event at the minute of each time, with `prayer`, `district` and `ramadan` in the event data. One trigger covers all of them:
+If you'd rather build playback yourself (different speakers per prayer, notifications, and so on), leave the speakers option empty and use the event. The integration fires a `diyanet_ezan_prayer` event at the minute of each time, with `prayer`, `district` and `ramadan` in the event data. One trigger covers all of them:
 
 ```yaml
 - id: ezan
@@ -102,7 +146,7 @@ conditions:
 
 ## Dashboard card
 
-A compact card with the next prayer, a countdown, and a fold-out row with all five times. Needs [Mushroom](https://github.com/piitaya/lovelace-mushroom), [card-mod](https://github.com/thomasloven/lovelace-card-mod), [stack-in-card](https://github.com/custom-cards/stack-in-card) and [layout-card](https://github.com/thomasloven/lovelace-layout-card), plus two helpers: `input_boolean.disableprayer` (mute) and `input_boolean.prayer_dropdown` (fold-out).
+A compact card with the next prayer, a countdown, and a fold-out row with all five times. Needs [Mushroom](https://github.com/piitaya/lovelace-mushroom), [card-mod](https://github.com/thomasloven/lovelace-card-mod), [stack-in-card](https://github.com/custom-cards/stack-in-card) and [layout-card](https://github.com/thomasloven/lovelace-layout-card), plus a helper `input_boolean.prayer_dropdown` for the fold-out. The mute button uses the playback switch from the options above.
 
 ```yaml
 type: custom:stack-in-card
@@ -134,9 +178,9 @@ cards:
             ha-card { --ha-card-box-shadow: none; }
         cards:
           - type: custom:mushroom-template-card
-            entity: input_boolean.disableprayer
-            icon: "{{ 'mdi:volume-off' if is_state(entity, 'on') else 'mdi:volume-high' }}"
-            icon_color: "{{ 'red' if is_state(entity, 'on') else 'green' }}"
+            entity: switch.diyanet_ezan_playback
+            icon: "{{ 'mdi:volume-high' if is_state(entity, 'on') else 'mdi:volume-off' }}"
+            icon_color: "{{ 'green' if is_state(entity, 'on') else 'red' }}"
             tap_action:
               action: toggle
           - type: custom:mushroom-template-card
@@ -190,7 +234,7 @@ Paste it through the dashboard's raw configuration editor; it expands the `<<: *
 
 ## Upgrading from the YAML guide
 
-If you used the earlier `rest:` and `template:` setup, remove those blocks from `configuration.yaml` after installing this integration, and point your automations and cards at the new entity IDs above. The old `…_vakti` true/false sensors aren't needed any more; use the `diyanet_ezan_prayer` event or a time trigger instead.
+If you used the earlier `rest:` and `template:` setup, remove those blocks from `configuration.yaml` after installing this integration, and point your automations and cards at the new entity IDs above. The old `…_vakti` true/false sensors aren't needed any more. Your speaker automation can usually go too: set the speakers in **Configure**, and replace `input_boolean.disableprayer` with `switch.diyanet_ezan_playback` (note: on means *play*, the opposite of the old helper).
 
 ## Support
 

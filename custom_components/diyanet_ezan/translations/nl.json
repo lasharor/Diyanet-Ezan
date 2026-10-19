@@ -76,6 +76,60 @@
       "ramadan": {
         "name": "Ramadan"
       }
+    },
+    "switch": {
+      "playback": {
+        "name": "Afspelen"
+      }
+    },
+    "button": {
+      "play_now": {
+        "name": "Nu afspelen"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ezan afspelen",
+        "description": "Optioneel: speel de ezan af op je speakers. Laat de speakers leeg om afspelen uit te laten.",
+        "data": {
+          "media_players": "Speakers",
+          "media": "Ezan-audio",
+          "volume": "Volume",
+          "prayers": "Afspelen bij",
+          "sabah_offset": "Ochtend-ezan: minuten vóór Güneş",
+          "only_when_home": "Alleen als er iemand thuis is",
+          "announce": "Afspelen als aankondiging",
+          "sahur_offset": "Ramadan sahur-wekker: minuten vóór İmsak",
+          "sahur_media": "Audio voor sahur-wekker"
+        },
+        "data_description": {
+          "media_players": "Mediaspelers die de ezan afspelen.",
+          "media": "Mediapad of URL, bijv. media-source://media_source/local/ezan.mp3 (een bestand in je config/www- of media-map).",
+          "volume": "Zet dit volume vóór het afspelen. Laat leeg om het huidige volume te houden.",
+          "prayers": "Sabah is de ochtend-ezan, het ingestelde aantal minuten vóór Güneş.",
+          "only_when_home": "Slaat afspelen over als zone.home laat zien dat niemand thuis is.",
+          "announce": "Pauzeert wat er speelt en hervat het daarna, op speakers die dat ondersteunen.",
+          "sahur_offset": "Alleen tijdens Ramazan. 0 zet het uit.",
+          "sahur_media": "Laat leeg om de ezan-audio te gebruiken."
+        }
+      }
+    },
+    "error": {
+      "media_required": "Kies de audio die op deze speakers moet spelen."
+    }
+  },
+  "selector": {
+    "prayers": {
+      "options": {
+        "imsak": "İmsak",
+        "ogle": "Öğle",
+        "ikindi": "İkindi",
+        "aksam": "Akşam",
+        "yatsi": "Yatsı",
+        "sabah": "Sabah (ochtend)"
+      }
     }
   }
 }
