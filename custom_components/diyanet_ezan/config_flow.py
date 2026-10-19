@@ -5,23 +5,43 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
+    BooleanSelector,
+    EntitySelector,
+    EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    TextSelector,
 )
 
 from .api import DiyanetApi, DiyanetApiError
 from .const import (
+    CONF_ANNOUNCE,
     CONF_CITY,
     CONF_COUNTRY,
     CONF_DISTRICT,
     CONF_DISTRICT_ID,
     CONF_DISTRICT_NAME,
+    CONF_MEDIA,
+    CONF_MEDIA_PLAYERS,
+    CONF_ONLY_HOME,
+    CONF_PRAYERS,
+    CONF_SABAH_OFFSET,
+    CONF_SAHUR_MEDIA,
+    CONF_SAHUR_OFFSET,
+    CONF_VOLUME,
+    DEFAULT_PRAYERS,
+    DEFAULT_SABAH_OFFSET,
     DOMAIN,
+    PLAYABLE,
 )
 
 
@@ -46,6 +66,11 @@ def _select(options: list[SelectOptionDict]) -> SelectSelector:
 
 class DiyanetConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> DiyanetOptionsFlow:
+        return DiyanetOptionsFlow()
 
     def __init__(self) -> None:
         self._api: DiyanetApi | None = None
@@ -134,3 +159,58 @@ class DiyanetConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({vol.Required(CONF_DISTRICT): _select(self._district_options)}),
             errors=errors,
         )
+
+
+def _suggested(options: dict[str, Any], key: str) -> dict[str, Any]:
+    """Pre-fill a field without forcing a value (lets the user clear it)."""
+    value = options.get(key)
+    return {"suggested_value": value} if value not in (None, "", []) else {}
+
+
+def _minutes(maximum: int) -> NumberSelector:
+    return NumberSelector(
+        NumberSelectorConfig(min=0, max=maximum, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="min")
+    )
+
+
+class DiyanetOptionsFlow(OptionsFlow):
+    """Optional ezan playback. Leave the speakers empty to keep it off."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        options = dict(self.config_entry.options)
+
+        if user_input is not None:
+            if user_input.get(CONF_MEDIA_PLAYERS) and not (user_input.get(CONF_MEDIA) or "").strip():
+                errors[CONF_MEDIA] = "media_required"
+            else:
+                return self.async_create_entry(data=user_input)
+            options = user_input
+
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_MEDIA_PLAYERS, description=_suggested(options, CONF_MEDIA_PLAYERS)
+                ): EntitySelector(EntitySelectorConfig(domain="media_player", multiple=True)),
+                vol.Optional(CONF_MEDIA, description=_suggested(options, CONF_MEDIA)): TextSelector(),
+                vol.Optional(CONF_VOLUME, description=_suggested(options, CONF_VOLUME)): NumberSelector(
+                    NumberSelectorConfig(min=0, max=100, step=5, mode=NumberSelectorMode.SLIDER, unit_of_measurement="%")
+                ),
+                vol.Required(CONF_PRAYERS, default=options.get(CONF_PRAYERS, DEFAULT_PRAYERS)): SelectSelector(
+                    SelectSelectorConfig(
+                        options=list(PLAYABLE),
+                        multiple=True,
+                        mode=SelectSelectorMode.LIST,
+                        translation_key="prayers",
+                    )
+                ),
+                vol.Required(
+                    CONF_SABAH_OFFSET, default=options.get(CONF_SABAH_OFFSET, DEFAULT_SABAH_OFFSET)
+                ): _minutes(180),
+                vol.Required(CONF_ONLY_HOME, default=options.get(CONF_ONLY_HOME, True)): BooleanSelector(),
+                vol.Required(CONF_ANNOUNCE, default=options.get(CONF_ANNOUNCE, True)): BooleanSelector(),
+                vol.Required(CONF_SAHUR_OFFSET, default=options.get(CONF_SAHUR_OFFSET, 0)): _minutes(180),
+                vol.Optional(CONF_SAHUR_MEDIA, description=_suggested(options, CONF_SAHUR_MEDIA)): TextSelector(),
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema, errors=errors)

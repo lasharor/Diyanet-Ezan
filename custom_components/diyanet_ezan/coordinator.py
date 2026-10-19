@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .api import DiyanetApi, DiyanetApiError
+from .ezan import EzanPlayer
 from .const import CONF_DISTRICT_ID, DOMAIN, EVENT_PRAYER, LOGGER, UPDATE_INTERVAL
 from .prayer import DayTimes, next_prayer, parse_days, prayer_at_minute, times_on
 
@@ -29,6 +30,7 @@ class DiyanetCoordinator(DataUpdateCoordinator[dict[date, DayTimes]]):
         self._store: Store[list] = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self._cache: dict[date, DayTimes] = {}
         self._last_event_minute: datetime | None = None
+        self.ezan: EzanPlayer | None = None  # set in __init__ when speakers are configured
 
     async def async_load_cache(self) -> None:
         """Load the last good response from disk, so startup works offline."""
@@ -74,6 +76,9 @@ class DiyanetCoordinator(DataUpdateCoordinator[dict[date, DayTimes]]):
         if self.today(now) is None and now.minute % 15 == 0:
             # Table ran out (e.g. long outage); try again without waiting 12h.
             self.hass.async_create_task(self.async_request_refresh())
+
+        if self.ezan is not None:
+            self.ezan.async_minute_tick(now)
 
         prayer = prayer_at_minute(self.data or {}, now)
         minute = now.replace(second=0, microsecond=0)

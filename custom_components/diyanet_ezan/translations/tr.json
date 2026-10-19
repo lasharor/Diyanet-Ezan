@@ -76,6 +76,60 @@
       "ramadan": {
         "name": "Ramazan"
       }
+    },
+    "switch": {
+      "playback": {
+        "name": "Ezan çalma"
+      }
+    },
+    "button": {
+      "play_now": {
+        "name": "Şimdi çal"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ezan çalma",
+        "description": "İsteğe bağlı: ezanı hoparlörlerinizde çalın. Kapalı tutmak için hoparlör seçmeyin.",
+        "data": {
+          "media_players": "Hoparlörler",
+          "media": "Ezan sesi",
+          "volume": "Ses seviyesi",
+          "prayers": "Çalınacak vakitler",
+          "sabah_offset": "Sabah ezanı: Güneş'ten kaç dakika önce",
+          "only_when_home": "Sadece evde biri varken",
+          "announce": "Anons olarak çal",
+          "sahur_offset": "Ramazan sahur alarmı: İmsak'tan kaç dakika önce",
+          "sahur_media": "Sahur alarmı sesi"
+        },
+        "data_description": {
+          "media_players": "Ezanı çalacak medya oynatıcılar.",
+          "media": "Medya yolu veya URL, örn. media-source://media_source/local/ezan.mp3 (config/www veya media klasöründeki bir dosya).",
+          "volume": "Çalmadan önce bu ses seviyesine ayarla. Mevcut seviyeyi korumak için boş bırakın.",
+          "prayers": "Sabah, Güneş'ten belirlenen dakika önce çalınan sabah ezanıdır.",
+          "only_when_home": "zone.home evde kimse olmadığını gösterirse çalmaz.",
+          "announce": "Çalan şeyi duraklatır ve sonra devam ettirir (destekleyen hoparlörlerde).",
+          "sahur_offset": "Sadece Ramazan'da. 0 kapatır.",
+          "sahur_media": "Ezan sesini kullanmak için boş bırakın."
+        }
+      }
+    },
+    "error": {
+      "media_required": "Bu hoparlörlerde çalınacak sesi seçin."
+    }
+  },
+  "selector": {
+    "prayers": {
+      "options": {
+        "imsak": "İmsak",
+        "ogle": "Öğle",
+        "ikindi": "İkindi",
+        "aksam": "Akşam",
+        "yatsi": "Yatsı",
+        "sabah": "Sabah"
+      }
     }
   }
 }

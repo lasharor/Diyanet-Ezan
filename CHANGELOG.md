@@ -11,6 +11,10 @@
 - Next prayer (time and name), minutes remaining, Hijri date and a Ramadan binary sensor.
 - `diyanet_ezan_prayer` event fired at each prayer time.
 - On-disk cache so restarts and short API outages keep working.
+- Optional ezan playback on speakers, set up under Configure: speakers, audio, volume,
+  which times, morning ezan offset before Güneş, only-when-home, announce mode, and a
+  Ramadan sahur alarm. Adds a playback switch (mute) and a Play now button.
+- Logo and icon, shown in Home Assistant 2026.3 and newer.
 - English, Dutch and Turkish translations.
 
 ## [2026-03-04]

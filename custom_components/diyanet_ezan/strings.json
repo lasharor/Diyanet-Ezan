@@ -76,6 +76,60 @@
       "ramadan": {
         "name": "Ramadan"
       }
+    },
+    "switch": {
+      "playback": {
+        "name": "Playback"
+      }
+    },
+    "button": {
+      "play_now": {
+        "name": "Play now"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ezan playback",
+        "description": "Optional: play the ezan on your speakers. Leave the speakers empty to keep playback off.",
+        "data": {
+          "media_players": "Speakers",
+          "media": "Ezan audio",
+          "volume": "Volume",
+          "prayers": "Play at",
+          "sabah_offset": "Morning ezan: minutes before Güneş",
+          "only_when_home": "Only when someone is home",
+          "announce": "Play as announcement",
+          "sahur_offset": "Ramadan sahur alarm: minutes before İmsak",
+          "sahur_media": "Sahur alarm audio"
+        },
+        "data_description": {
+          "media_players": "Media players that play the ezan.",
+          "media": "Media path or URL, e.g. media-source://media_source/local/ezan.mp3 (a file in your config/www or media folder).",
+          "volume": "Set this volume before playing. Leave empty to keep each speaker's current volume.",
+          "prayers": "Sabah is the morning ezan, played the set number of minutes before Güneş.",
+          "only_when_home": "Skips playback when zone.home shows nobody is home.",
+          "announce": "Pauses whatever is playing and resumes it afterwards, on speakers that support it.",
+          "sahur_offset": "Only during Ramazan. 0 turns it off.",
+          "sahur_media": "Leave empty to use the ezan audio."
+        }
+      }
+    },
+    "error": {
+      "media_required": "Choose the audio to play on these speakers."
+    }
+  },
+  "selector": {
+    "prayers": {
+      "options": {
+        "imsak": "İmsak",
+        "ogle": "Öğle",
+        "ikindi": "İkindi",
+        "aksam": "Akşam",
+        "yatsi": "Yatsı",
+        "sabah": "Sabah (morning)"
+      }
     }
   }
 }
