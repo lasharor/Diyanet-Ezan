@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Diyanet Ezan",
+        "description": "Konumunuzu seçin. Liste doğrudan Diyanet'ten gelir, bu yüzden vakitler resmi siteyle aynıdır.",
+        "data": {
+          "country": "Ülke"
+        }
+      },
+      "city": {
+        "title": "Diyanet Ezan",
+        "data": {
+          "city": "Şehir"
+        }
+      },
+      "district": {
+        "title": "Diyanet Ezan",
+        "description": "Size en yakın ilçeyi seçin.",
+        "data": {
+          "district": "İlçe"
+        }
+      }
+    },
+    "error": {
+      "no_times": "Diyanet bu ilçe için vakit döndürmedi. Yakındaki bir ilçeyi deneyin."
+    },
+    "abort": {
+      "already_configured": "Bu ilçe zaten kurulu.",
+      "cannot_connect": "Diyanet namaz vakitleri servisine ulaşılamadı. Daha sonra tekrar deneyin.",
+      "no_locations": "Diyanet bu seçim için konum listelemiyor."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "imsak": {
+        "name": "İmsak"
+      },
+      "gunes": {
+        "name": "Güneş"
+      },
+      "ogle": {
+        "name": "Öğle"
+      },
+      "ikindi": {
+        "name": "İkindi"
+      },
+      "aksam": {
+        "name": "Akşam"
+      },
+      "yatsi": {
+        "name": "Yatsı"
+      },
+      "next_prayer": {
+        "name": "Sonraki vakit"
+      },
+      "time_remaining": {
+        "name": "Kalan süre"
+      },
+      "hijri_date": {
+        "name": "Hicri tarih"
+      },
+      "next_prayer_name": {
+        "name": "Sonraki vakit adı",
+        "state": {
+          "imsak": "İmsak",
+          "gunes": "Güneş",
+          "ogle": "Öğle",
+          "ikindi": "İkindi",
+          "aksam": "Akşam",
+          "yatsi": "Yatsı"
+        }
+      }
+    },
+    "binary_sensor": {
+      "ramadan": {
+        "name": "Ramazan"
+      }
+    }
+  }
+}

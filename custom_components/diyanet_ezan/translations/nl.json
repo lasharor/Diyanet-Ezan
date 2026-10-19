@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Diyanet Ezan",
+        "description": "Kies je locatie. De lijst komt rechtstreeks van Diyanet, dus de tijden komen overeen met de officiële website.",
+        "data": {
+          "country": "Land"
+        }
+      },
+      "city": {
+        "title": "Diyanet Ezan",
+        "data": {
+          "city": "Stad"
+        }
+      },
+      "district": {
+        "title": "Diyanet Ezan",
+        "description": "Kies de plaats die het dichtst bij je ligt.",
+        "data": {
+          "district": "Plaats"
+        }
+      }
+    },
+    "error": {
+      "no_times": "Diyanet gaf geen gebedstijden voor deze plaats. Probeer een plaats in de buurt."
+    },
+    "abort": {
+      "already_configured": "Deze plaats is al ingesteld.",
+      "cannot_connect": "Kan de Diyanet-gebedstijden niet bereiken. Probeer het later opnieuw.",
+      "no_locations": "Diyanet heeft geen locaties voor deze keuze."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "imsak": {
+        "name": "İmsak"
+      },
+      "gunes": {
+        "name": "Güneş"
+      },
+      "ogle": {
+        "name": "Öğle"
+      },
+      "ikindi": {
+        "name": "İkindi"
+      },
+      "aksam": {
+        "name": "Akşam"
+      },
+      "yatsi": {
+        "name": "Yatsı"
+      },
+      "next_prayer": {
+        "name": "Volgend gebed"
+      },
+      "time_remaining": {
+        "name": "Tijd tot volgend gebed"
+      },
+      "hijri_date": {
+        "name": "Hijri-datum"
+      },
+      "next_prayer_name": {
+        "name": "Naam volgend gebed",
+        "state": {
+          "imsak": "İmsak",
+          "gunes": "Güneş",
+          "ogle": "Öğle",
+          "ikindi": "İkindi",
+          "aksam": "Akşam",
+          "yatsi": "Yatsı"
+        }
+      }
+    },
+    "binary_sensor": {
+      "ramadan": {
+        "name": "Ramadan"
+      }
+    }
+  }
+}
