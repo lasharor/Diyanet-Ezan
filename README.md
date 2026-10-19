@@ -1,106 +1,201 @@
-# Diyanet Ezan - Home Assistant Add-on
+# Diyanet Ezan for Home Assistant
 
-A Home Assistant add-on that provides prayer times (Ezan times) from the Diyanet (Turkish Directorate of Religious Affairs) using the ezanvakti API.
+Official Diyanet (Türkiye) prayer times in Home Assistant, the same times you see on [namazvakti.diyanet.gov.tr](https://namazvakti.diyanet.gov.tr). No YAML needed: pick your country, city and district from the setup dialog and the sensors appear.
 
-## Features
-
-- Fetches prayer times from https://ezanvakti.emushaf.net API
-- Configurable city and country
-- REST API endpoints for integration with Home Assistant
-- Automatic updates every 6 hours
-- Support for multiple architectures (aarch64, amd64, armv7)
+The times come from [ezanvakti.emushaf.net](https://ezanvakti.emushaf.net), an API by Furkan Tektas that mirrors Diyanet's own table.
 
 ## Installation
 
-1. Add this repository to your Home Assistant:
-   ```
-   https://github.com/lasharor/Diyanet-Ezan
-   ```
+### HACS (recommended)
 
-2. Install the "Diyanet Ezan" add-on from the add-on store
+1. In HACS, open the menu (⋮) → **Custom repositories**.
+2. Add `https://github.com/lasharor/Diyanet-Ezan` with category **Integration**.
+3. Search for **Diyanet Ezan**, install it, and restart Home Assistant.
 
-3. Configure the city and country in the add-on options
+### Manual
 
-4. Start the add-on
+Copy `custom_components/diyanet_ezan` into the `custom_components` folder of your Home Assistant config and restart.
 
-## Configuration
+## Setup
 
-```yaml
-city: Istanbul
-country: Turkey
-```
+**Settings → Devices & services → Add integration → Diyanet Ezan**, then choose your country, city and district. Countries with a single city level (such as the Netherlands) skip straight to the district list. You can add several districts if you want times for more than one place.
 
-### Available Cities
+## Entities
 
-The add-on supports all cities available in the Diyanet API. You can fetch the list of available cities from the `/api/cities` endpoint.
+Entity IDs below are what you get with Home Assistant set to English. Check the **Diyanet Ezan** device page for the exact IDs on your system.
 
-## API Endpoints
+| Entity | What it shows |
+|---|---|
+| `sensor.diyanet_ezan_imsak` | İmsak time today |
+| `sensor.diyanet_ezan_gunes` | Güneş (sunrise) |
+| `sensor.diyanet_ezan_ogle` | Öğle |
+| `sensor.diyanet_ezan_ikindi` | İkindi |
+| `sensor.diyanet_ezan_aksam` | Akşam |
+| `sensor.diyanet_ezan_yatsi` | Yatsı |
+| `sensor.diyanet_ezan_next_prayer` | Time of the next prayer (attribute `prayer` holds its name) |
+| `sensor.diyanet_ezan_next_prayer_name` | Name of the next prayer (`imsak`, `gunes`, `ogle`, …) |
+| `sensor.diyanet_ezan_time_remaining` | Minutes until the next prayer |
+| `sensor.diyanet_ezan_hijri_date` | Hijri date, e.g. `8 Cemaziyelevvel 1448` |
+| `binary_sensor.diyanet_ezan_ramadan` | On during Ramazan |
 
-### Get Prayer Times
-```
-GET /api/prayer-times
-```
+The time sensors are real timestamps, so the dashboard shows them in your own time format and you can trigger automations on them directly. After Yatsı the next prayer rolls over to tomorrow's İmsak.
 
-Returns the prayer times for the configured city.
+Times are refreshed twice a day and cached on disk, so a restart or a short API outage doesn't leave you without times.
 
-### Get Available Cities
-```
-GET /api/cities
-```
+## Automations
 
-Returns a list of all available cities in the API.
+### Play the ezan at every prayer time
 
-### Get Current Configuration
-```
-GET /api/config
-```
-
-Returns the current city and country configuration.
-
-## Prayer Times
-
-The add-on provides the following prayer times:
-- **Imsak**: Beginning of fasting period (just before Fajr)
-- **Gunes**: Sunrise
-- **Ogle**: Noon/Zuhr
-- **Ikindi**: Afternoon/Asr
-- **Aksam**: Evening/Maghrib
-- **Yatsi**: Night/Isha
-
-## Usage with Home Assistant
-
-Once the add-on is running, you can integrate it with Home Assistant using REST sensors or automation:
-
-### Example REST Sensor
+The integration fires a `diyanet_ezan_prayer` event at the minute of each time, with `prayer`, `district` and `ramadan` in the event data. One trigger covers all of them:
 
 ```yaml
-sensor:
-  - platform: rest
-    resource: http://localhost:8000/api/prayer-times
-    name: Diyanet Prayer Times
-    json_attributes:
-      - Imsak
-      - Gunes
-      - Ogle
-      - Ikindi
-      - Aksam
-      - Yatsi
-    value_template: '{{ value_json.Ogle }}'
+- id: ezan
+  alias: Ezan
+  triggers:
+    - trigger: event
+      event_type: diyanet_ezan_prayer
+  conditions:
+    - condition: template   # skip Güneş; it's sunrise, not a prayer
+      value_template: "{{ trigger.event.data.prayer != 'gunes' }}"
+    - condition: numeric_state   # someone is home
+      entity_id: zone.home
+      above: 0
+  actions:
+    - action: media_player.play_media
+      target:
+        entity_id: media_player.living_room
+      data:
+        media_content_id: media-source://media_source/local/ezan.mp3
+        media_content_type: music
+        announce: true
 ```
 
-## Development
+### Trigger before a time (sabah, sahur)
 
-To build and test locally:
+Use a time trigger with an offset. For example, 35 minutes before sunrise for sabah, or 40 minutes before İmsak to wake up for sahur:
 
-```bash
-docker build -t diyanet-ezan .
-docker run -it -p 8000:8000 diyanet-ezan
+```yaml
+triggers:
+  - trigger: time
+    at:
+      entity_id: sensor.diyanet_ezan_imsak
+      offset: "-00:40:00"
+conditions:
+  - condition: state
+    entity_id: binary_sensor.diyanet_ezan_ramadan
+    state: "on"
 ```
 
-## License
+### Ask a voice assistant how long until the next prayer
 
-MIT License
+```yaml
+- action: tts.speak
+  target:
+    entity_id: tts.google_translate_en_com
+  data:
+    media_player_entity_id: media_player.living_room
+    message: >-
+      {% set m = states('sensor.diyanet_ezan_time_remaining') | int(0) %}
+      {{ state_attr('sensor.diyanet_ezan_next_prayer', 'prayer') | capitalize }}
+      in {{ m // 60 }} hours and {{ m % 60 }} minutes.
+```
+
+## Dashboard card
+
+A compact card with the next prayer, a countdown, and a fold-out row with all five times. Needs [Mushroom](https://github.com/piitaya/lovelace-mushroom), [card-mod](https://github.com/thomasloven/lovelace-card-mod), [stack-in-card](https://github.com/custom-cards/stack-in-card) and [layout-card](https://github.com/thomasloven/lovelace-layout-card), plus two helpers: `input_boolean.disableprayer` (mute) and `input_boolean.prayer_dropdown` (fold-out).
+
+```yaml
+type: custom:stack-in-card
+cards:
+  - type: custom:layout-card
+    layout_type: custom:grid
+    layout:
+      grid-template-columns: auto 120px
+      margin: -4px 0px -10px -4px
+    cards:
+      - type: custom:mushroom-template-card
+        entity: sensor.diyanet_ezan_next_prayer
+        primary: Namaz
+        secondary: >-
+          {% set m = states('sensor.diyanet_ezan_time_remaining') | int(0) %}
+          {{ as_timestamp(states(entity)) | timestamp_custom('%H:%M') }}
+          | {{ '%d:%02d' | format(m // 60, m % 60) }} to go
+        icon: mdi:hands-pray
+        icon_color: grey
+        tap_action:
+          action: none
+        card_mod:
+          style: |
+            ha-card { --ha-card-box-shadow: none; }
+      - type: custom:stack-in-card
+        mode: horizontal
+        card_mod:
+          style: |
+            ha-card { --ha-card-box-shadow: none; }
+        cards:
+          - type: custom:mushroom-template-card
+            entity: input_boolean.disableprayer
+            icon: "{{ 'mdi:volume-off' if is_state(entity, 'on') else 'mdi:volume-high' }}"
+            icon_color: "{{ 'red' if is_state(entity, 'on') else 'green' }}"
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            entity: input_boolean.prayer_dropdown
+            icon: "{{ 'mdi:chevron-up' if is_state(entity, 'on') else 'mdi:chevron-down' }}"
+            icon_color: disabled
+            tap_action:
+              action: toggle
+  - type: conditional
+    conditions:
+      - condition: state
+        entity: input_boolean.prayer_dropdown
+        state: "on"
+    card:
+      type: grid
+      columns: 5
+      square: false
+      cards:
+        - &prayer
+          type: custom:mushroom-template-card
+          entity: sensor.diyanet_ezan_imsak
+          primary: İmsak
+          secondary: "{{ as_timestamp(states(entity)) | timestamp_custom('%H:%M') }}"
+          icon: mdi:weather-night-partly-cloudy
+          icon_color: "{{ 'disabled' if as_timestamp(states(entity)) < as_timestamp(now()) else 'amber' }}"
+          layout: vertical
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card { --ha-card-box-shadow: none; }
+        - <<: *prayer
+          entity: sensor.diyanet_ezan_ogle
+          primary: Öğle
+          icon: mdi:white-balance-sunny
+        - <<: *prayer
+          entity: sensor.diyanet_ezan_ikindi
+          primary: İkindi
+          icon: mdi:weather-partly-cloudy
+        - <<: *prayer
+          entity: sensor.diyanet_ezan_aksam
+          primary: Akşam
+          icon: mdi:weather-sunset-down
+        - <<: *prayer
+          entity: sensor.diyanet_ezan_yatsi
+          primary: Yatsı
+          icon: mdi:weather-night
+```
+
+Paste it through the dashboard's raw configuration editor; it expands the `<<: *prayer` shortcuts into five full cards when it saves.
+
+## Upgrading from the YAML guide
+
+If you used the earlier `rest:` and `template:` setup, remove those blocks from `configuration.yaml` after installing this integration, and point your automations and cards at the new entity IDs above. The old `…_vakti` true/false sensors aren't needed any more; use the `diyanet_ezan_prayer` event or a time trigger instead.
 
 ## Support
 
-For issues and feature requests, please open an issue on the GitHub repository.
+Open an [issue](https://github.com/lasharor/Diyanet-Ezan/issues) for bugs or feature requests.
+
+## License
+
+MIT

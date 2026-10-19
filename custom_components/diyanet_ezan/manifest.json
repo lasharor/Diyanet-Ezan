@@ -1,1 +1,14 @@
-{ "domain": "diyanet_ezan", "name": "Diyanet Ezan", "codeowners": ["@lasharor"], "config_flow": true, "documentation": "https://github.com/lasharor/Diyanet-Ezan", "requirements": ["aiohttp==3.9.1"], "version": "1.0.0" }
+{
+  "domain": "diyanet_ezan",
+  "name": "Diyanet Ezan",
+  "codeowners": [
+    "@lasharor"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/lasharor/Diyanet-Ezan",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/lasharor/Diyanet-Ezan/issues",
+  "requirements": [],
+  "version": "2.0.0"
+}
